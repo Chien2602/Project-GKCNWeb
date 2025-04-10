@@ -48,7 +48,7 @@ function ModalViewNote({ note, onClose, onEdit, onDelete }) {
         </div>
 
         <div className="mb-6">
-          <div className="text-sm text-gray-400 mb-1">Description</div>
+          <div className="text-sm text-gray-400 mb-1">Content</div>
           <div className="text-gray-200 whitespace-pre-wrap">{note.content}</div>
         </div>
 

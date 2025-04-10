@@ -30,6 +30,8 @@ function NoteUI() {
     user: user,
   };
   const [noteData, setNoteData] = useState([]);
+  const today = new Date().toISOString().split("T")[0];
+  const [noteToday, setNoteToDay] = useState([]);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -70,6 +72,7 @@ function NoteUI() {
         const response = await api.get("/notes/");
         setNoteData(response.data);
         console.log("Dữ liệu ghi chú:", response.data);
+        setNoteToDay(response.data.filter((note) => note.day === today));
       } catch (err) {
         console.error("Lỗi khi lấy ghi chú:", err);
         console.log("Chi tiết lỗi từ server:", err.response?.data);
@@ -91,7 +94,9 @@ function NoteUI() {
 
       alert("Ghi chú đã được thêm!");
       setNoteData((prevNotes) => [...prevNotes, response.data.note]);
-
+      if (response.data.note.day === today) {
+        setNoteToDay((prevNotes) => [...prevNotes, response.data.note]);
+      }
       // Reset form
       setNoteTitle("");
       setNoteContent("");
@@ -113,6 +118,9 @@ function NoteUI() {
       setNoteData((prevNotes) =>
         prevNotes.filter((note) => note.id !== noteId)
       );
+      setNoteToDay((prevNotes) =>
+        prevNotes.filter((note) => note.id !== noteId)
+      );
 
       alert("Đã xoá ghi chú!");
     } catch (err) {
@@ -132,7 +140,11 @@ function NoteUI() {
           note.id === noteId ? response.data.note : note
         )
       );
-
+      setNoteToDay((prevNotes) =>
+        prevNotes.map((note) =>
+          note.id === noteId ? response.data.note : note
+        )
+      );
       setIsEditing(false);
       setEditNote(null);
     } catch (error) {
@@ -162,7 +174,7 @@ function NoteUI() {
                 className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-lg flex space-x-1 justify-center items-center cursor-pointer transition-colors duration-200"
               >
                 <Plus className="w-5 h-5" />
-                <h1 className="text-sm font-semibold">Add Event</h1>
+                <h1 className="text-sm font-semibold">Add Note</h1>
               </button>
             </div>
 
@@ -355,10 +367,35 @@ function NoteUI() {
                     Tasks Due Today
                   </h1>
                   <div className="flex items-center space-x-2 mt-4">
-                    <div className="w-[2px] h-[20px] bg-purple-500"></div>
-                    <h1 className="text-sm text-gray-300">
-                      Meeting with Alpha Team
-                    </h1>
+                    <div className="flex flex-col">
+                      {noteToday.length > 0 ? (
+                        noteToday.map((note) => (
+                          <div
+                            key={note.id}
+                            className="flex items-center space-x-2 mt-2"
+                          >
+                            <div
+                              className={`w-[2px] h-[20px] ${
+                                note.tag === "Low"
+                                  ? "bg-green-300"
+                                  : note.tag === "Medium"
+                                  ? "bg-yellow-300"
+                                  : note.tag === "High"
+                                  ? "bg-red-400"
+                                  : "bg-gray-400"
+                              }`}
+                            ></div>
+                            <h1 className="text-sm text-gray-300">
+                              {note.title}
+                            </h1>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-400 mt-4">
+                          No notes for today.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -454,14 +491,14 @@ function NoteUI() {
                             </svg>
                           </div>
                           <h2 className="text-xl font-semibold text-gray-100">
-                            Chỉnh sửa ghi chú
+                            Edit notes
                           </h2>
                         </div>
 
                         <div className="space-y-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-300 mb-1.5 ml-1">
-                              Tiêu đề
+                              Title
                             </label>
                             <div className="relative">
                               <input
@@ -481,7 +518,7 @@ function NoteUI() {
 
                           <div>
                             <label className="block text-sm font-medium text-gray-300 mb-1.5 ml-1">
-                              Nội dung
+                              Content
                             </label>
                             <div className="relative">
                               <textarea
@@ -493,7 +530,7 @@ function NoteUI() {
                                     content: e.target.value,
                                   })
                                 }
-                                placeholder="Nhập nội dung chi tiết"
+                                placeholder="Enter detailed content"
                               ></textarea>
                             </div>
                           </div>
@@ -505,14 +542,14 @@ function NoteUI() {
                             onClick={() => setIsEditing(false)}
                           >
                             <X className="w-4 h-4" />
-                            <span>Hủy</span>
+                            <span>Cancel</span>
                           </button>
                           <button
                             className="bg-gradient-to-r from-purple-700 to-purple-600 hover:from-purple-600 hover:to-purple-500 flex justify-center items-center gap-2 text-white px-5 py-2.5 rounded-lg transition-all duration-200 shadow-lg shadow-purple-900/20 font-medium"
                             onClick={() => handleUpdateNote(editNote.id)}
                           >
                             <Save className="w-4 h-4" />
-                            <span>Lưu thay đổi</span>
+                            <span>Save</span>
                           </button>
                         </div>
                       </div>

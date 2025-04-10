@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import {Lock, Eye, EyeOff, Save, X, Settings } from "lucide-react"
+import {Lock, Eye, EyeOff, Save, X, Settings, LogOut } from "lucide-react"
 import api from "../../api/AxiosInstance"
+import { useNavigate } from "react-router"
 
 function Header({ username }) {
+  const Navigate = useNavigate();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
@@ -72,6 +74,12 @@ function Header({ username }) {
     }
   }
 
+  const logOut = () => {
+    Navigate("/login");
+    localStorage.removeItem("token");
+    localStorage.removeItem("refresh");
+  }
+
   return (
     <header className="flex justify-between items-center">
       <div className="flex items-center space-x-2">
@@ -101,8 +109,8 @@ function Header({ username }) {
       <div className="flex items-center space-x-4">
         <button
           onClick={openPasswordModal}
-          className="p-2 bg-gray-800/50 rounded-full hover:bg-gray-700/50 transition-colors duration-200"
-          title="Đổi mật khẩu"
+          className="p-2 bg-gray-800/50 cursor-pointer rounded-full hover:bg-gray-700/50 transition-colors duration-200"
+          title="Change Password"
         >
           <Settings className="w-5 h-5 text-purple-400" />
         </button>
@@ -119,6 +127,13 @@ function Header({ username }) {
             <span className="text-xs text-gray-400">Online</span>
           </div>
         </div>
+        <button
+          onClick={openPasswordModal}
+          className="p-2 bg-gray-800/50 cursor-pointer rounded-full hover:bg-gray-700/50 transition-colors duration-200"
+          title="Logout"
+        >
+          <LogOut onClick={logOut} className="w-5 h-5 text-purple-400" />
+        </button>
       </div>
 
       {/* Password Change Modal */}
@@ -129,7 +144,7 @@ function Header({ username }) {
               <div className="bg-purple-600/20 p-2 rounded-lg">
                 <Lock className="h-5 w-5 text-purple-400" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-100">Đổi mật khẩu</h2>
+              <h2 className="text-xl font-semibold text-gray-100">Change password</h2>
             </div>
 
             {error && (
@@ -146,14 +161,14 @@ function Header({ username }) {
 
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5 ml-1">Mật khẩu hiện tại</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5 ml-1">Current password</label>
                 <div className="relative">
                   <input
                     type={showCurrentPassword ? "text" : "password"}
                     className="w-full bg-gray-700/50 border border-gray-600/50 p-3 pl-4 pr-10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-transparent transition-all duration-200"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu hiện tại"
+                    placeholder="Enter current password"
                     required
                   />
                   <button
@@ -161,20 +176,20 @@ function Header({ username }) {
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-300"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                   >
-                    {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showCurrentPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5 ml-1">Mật khẩu mới</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5 ml-1">New password</label>
                 <div className="relative">
                   <input
                     type={showNewPassword ? "text" : "password"}
                     className="w-full bg-gray-700/50 border border-gray-600/50 p-3 pl-4 pr-10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-transparent transition-all duration-200"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu mới"
+                    placeholder="Enter new password"
                     minLength={8}
                     required
                   />
@@ -183,21 +198,21 @@ function Header({ username }) {
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-300"
                     onClick={() => setShowNewPassword(!showNewPassword)}
                   >
-                    {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showNewPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-1 ml-1">Mật khẩu phải có ít nhất 8 ký tự</p>
+                <p className="text-xs text-gray-400 mt-1 ml-1">Password must have at least 8 characters</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5 ml-1">Xác nhận mật khẩu mới</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5 ml-1">Confirm new password</label>
                 <div className="relative">
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     className="w-full bg-gray-700/50 border border-gray-600/50 p-3 pl-4 pr-10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-transparent transition-all duration-200"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Nhập lại mật khẩu mới"
+                    placeholder="Re-enter the new password"
                     required
                   />
                   <button
@@ -205,7 +220,7 @@ function Header({ username }) {
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-300"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
@@ -218,7 +233,7 @@ function Header({ username }) {
                   disabled={isLoading}
                 >
                   <X className="w-4 h-4" />
-                  <span>Hủy</span>
+                  <span>Cancel</span>
                 </button>
                 <button
                   type="submit"
@@ -251,12 +266,12 @@ function Header({ username }) {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      <span>Đang xử lý...</span>
+                      <span>Processing...</span>
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      <span>Lưu thay đổi</span>
+                      <span>Save</span>
                     </>
                   )}
                 </button>
