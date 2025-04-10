@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router"; // Sửa lỗi import
 import { Eye, EyeOff, User, Lock, Mail } from "lucide-react";
+import api from "../../api/AxiosInstance";
 
 function Register() {
     const [userData, setUserData] = useState({
@@ -12,7 +13,6 @@ function Register() {
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    // Hàm xử lý thay đổi input
     const handleChange = (e) => {
         const { name, value } = e.target;
         setUserData((prev) => ({
@@ -20,13 +20,20 @@ function Register() {
             [name]: value,
         }));
     };
-
-    // Xử lý đăng ký
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (userData.password !== userData.confirmPassword) {
             alert("Passwords do not match!");
             return;
+        }
+        else {
+            try {
+                await api.post("register/",
+                    userData
+                );
+            } catch(err){
+                console.log(err);
+            }
         }
         console.log("User Data:", userData);
     };

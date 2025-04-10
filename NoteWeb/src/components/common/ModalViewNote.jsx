@@ -1,47 +1,81 @@
-import { Pencil, Trash2, X } from "lucide-react";
+"use client"
+import { Edit, Trash2, X } from "lucide-react"
 
 function ModalViewNote({ note, onClose, onEdit, onDelete }) {
-  if (!note) return null;
+  if (!note) return null
+
+  const getPriorityColor = (tag) => {
+    switch (tag) {
+      case "Low":
+        return "bg-emerald-600"
+      case "Medium":
+        return "bg-amber-600"
+      case "High":
+        return "bg-rose-600"
+      default:
+        return "bg-emerald-600"
+    }
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-96 relative">
-        <button
-          className="absolute top-2 right-2 text-gray-600 cursor-pointer"
-          onClick={onClose}
-        >
-          <X className="w-4 h-4 text-black" />
-        </button>
-
-        <h2 className="text-lg font-bold mb-2">{note.title}</h2>
-        <p>
-          <strong>Time:</strong> {note.time_start.slice(0, 5)} - {note.time_end.slice(0, 5)}
-        </p>
-        <p>
-          <strong>Important:</strong> {note.tag}
-        </p>
-        <p className="mt-2 whitespace-pre-wrap">{note.content}</p>
-
-        <div className="flex justify-end gap-2 mt-4">
-          <button
-            onClick={() => onEdit(note)}
-            className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 active:scale-95 transition-all text-white px-4 py-2 rounded-lg shadow-sm"
-          >
-            <Pencil className="w-4 h-4 text-white" />
-            <span className="text-sm font-medium">Edit</span>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50">
+      <div className="bg-gray-800 w-full max-w-md p-6 rounded-xl shadow-2xl border border-gray-700">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-2">
+            <div className={`${getPriorityColor(note.tag)} w-3 h-3 rounded-full`}></div>
+            <h2 className="text-xl font-bold text-gray-100">{note.title}</h2>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-200 transition-colors duration-200">
+            <X className="w-5 h-5" />
           </button>
+        </div>
 
+        <div className="mb-4">
+          <div className="text-sm text-gray-400 mb-1">Date</div>
+          <div className="text-gray-200">{new Date(note.day).toLocaleDateString()}</div>
+        </div>
+
+        <div className="mb-4">
+          <div className="text-sm text-gray-400 mb-1">Time</div>
+          <div className="text-gray-200">
+            {note.time_start.slice(0, 5)} - {note.time_end.slice(0, 5)}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <div className="text-sm text-gray-400 mb-1">Priority</div>
+          <div className="text-gray-200">{note.tag}</div>
+        </div>
+
+        <div className="mb-6">
+          <div className="text-sm text-gray-400 mb-1">Description</div>
+          <div className="text-gray-200 whitespace-pre-wrap">{note.content}</div>
+        </div>
+
+        <div className="flex justify-end gap-2">
           <button
-            onClick={() => onDelete(note.id)}
-            className="bg-red-500 flex gap-2 items-center justify-center hover:bg-red-600 text-white px-3 py-1 rounded"
+            className="bg-purple-700 hover:bg-purple-800 flex items-center gap-1 text-white px-3 py-1.5 rounded transition-colors duration-200"
+            onClick={() => onEdit(note)}
           >
-            <Trash2 className="w-4 h-4 text-white" />
-            <span className="text-sm font-medium">Delete</span>
+            <Edit className="w-4 h-4" />
+            <span>Edit</span>
+          </button>
+          <button
+            className="bg-gray-600 hover:bg-gray-700 flex items-center gap-1 text-white px-3 py-1.5 rounded transition-colors duration-200"
+            onClick={() => {
+              if (window.confirm("Are you sure you want to delete this note?")) {
+                onDelete(note.id)
+                onClose()
+              }
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Delete</span>
           </button>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default ModalViewNote;
+export default ModalViewNote

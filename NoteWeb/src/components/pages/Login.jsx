@@ -26,9 +26,10 @@ function Login() {
         username,
         password,
       });
-      console.log("Response:", response.data); // Log the response data
+      console.log("Response:", response.data);
       const token = response.data.access;
       localStorage.setItem("token", token);
+      localStorage.setItem("refresh", response.data.refresh);
   
       console.log("Login successful:", response.data);
       setError("");

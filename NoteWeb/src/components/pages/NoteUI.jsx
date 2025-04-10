@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import Header from "../partials/Header";
 import ModalViewNote from "../common/ModalViewNote";
-import { Pencil, Trash2, Save, X } from "lucide-react";
+import api from "../../api/AxiosInstance";
+import { Save, X, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 
 function NoteUI() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -47,76 +47,102 @@ function NoteUI() {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          console.error("Token không tồn tại trong localStorage");
-          return;
-        }
-
-        const response = await axios.get(
-          "http://127.0.0.1:8000/api/user-info/",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await api.get("/user-info/");
         console.log(response.data);
         setUser(response.data.id);
         setUserName(response.data.username);
       } catch (error) {
         console.error("Lỗi khi lấy thông tin người dùng:", error);
+
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("refresh");
+          window.location.href = "/login";
+        }
       }
     };
-
     fetchUserInfo();
   }, []);
 
   useEffect(() => {
     const fetchNotes = async () => {
       try {
-        const token = localStorage.getItem("token");
-
-        const response = await axios.get("http://127.0.0.1:8000/api/notes/", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
+        const response = await api.get("/notes/");
         setNoteData(response.data);
         console.log("Dữ liệu ghi chú:", response.data);
       } catch (err) {
         console.error("Lỗi khi lấy ghi chú:", err);
         console.log("Chi tiết lỗi từ server:", err.response?.data);
+
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("refresh");
+          window.location.href = "/login";
+        }
       }
     };
-
     fetchNotes();
   }, []);
 
   const handleSubmitAddNote = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://127.0.0.1:8000/api/notes/create/",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.post("/notes/create/", formData);
 
       alert("Ghi chú đã được thêm!");
       setNoteData((prevNotes) => [...prevNotes, response.data.note]);
+
+      // Reset form
+      setNoteTitle("");
+      setNoteContent("");
+      setNoteDate(new Date().toISOString().split("T")[0]);
+      setNoteTimeStart("");
+      setNoteTimeEnd("");
+      setTag("Low");
+
+      closeModal();
     } catch (err) {
       console.error("Lỗi khi thêm ghi chú:", err);
       console.log("Chi tiết lỗi từ server:", err.response?.data);
     }
   };
+
+  const handleDeleteNote = async (noteId) => {
+    try {
+      await api.delete(`/notes/delete/${noteId}/`);
+      setNoteData((prevNotes) =>
+        prevNotes.filter((note) => note.id !== noteId)
+      );
+
+      alert("Đã xoá ghi chú!");
+    } catch (err) {
+      console.error("Lỗi khi xoá ghi chú:", err);
+      console.log("Chi tiết lỗi từ server:", err.response?.data);
+    }
+  };
+
+  const handleUpdateNote = async (noteId) => {
+    try {
+      const response = await api.patch(`/notes/update/${noteId}/`, editNote);
+
+      alert("Ghi chú đã được cập nhật!");
+
+      setNoteData((prevNotes) =>
+        prevNotes.map((note) =>
+          note.id === noteId ? response.data.note : note
+        )
+      );
+
+      setIsEditing(false);
+      setEditNote(null);
+    } catch (error) {
+      console.error("Lỗi khi cập nhật ghi chú:", error);
+      console.log("Chi tiết lỗi:", error.response?.data);
+    }
+  };
+
   return (
-    <div className="p-10 bg-[url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop')]">
+    <div className="p-10 bg-gray-900 bg-[url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop')] bg-blend-overlay bg-opacity-90 min-h-screen text-gray-200">
       {/* HEADER */}
       <Header username={userName} />
 
@@ -125,48 +151,35 @@ function NoteUI() {
       {/* MAIN */}
       <div className="py-10">
         <div>
-          <div className="flex flex-col py-6  min-h-screen">
+          <div className="flex flex-col py-6 min-h-screen">
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-xl font-bold">
+              <h1 className="text-xl font-bold text-gray-100">
                 {selectedDate.toLocaleString("default", { month: "long" })}{" "}
                 {selectedDate.getFullYear()}
               </h1>
               <button
                 onClick={openModal}
-                className="bg-blue-600 text-white px-4 py-2 rounded flex space-x-1 justify-center items-center cursor-pointer"
+                className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-lg flex space-x-1 justify-center items-center cursor-pointer transition-colors duration-200"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-miterlimit="10"
-                    stroke-width="1.5"
-                    d="M6 12h12m-6 6V6"
-                  />
-                </svg>
+                <Plus className="w-5 h-5" />
                 <h1 className="text-sm font-semibold">Add Event</h1>
               </button>
             </div>
 
             {isModalOpen && (
-              <div className="fixed inset-0 bg-white/20 border-white/20 backdrop-blur-lg flex justify-center items-center z-50">
-                <div className="bg-white p-6 rounded-xl w-96 shadow-2xl backdrop-blur-lg">
-                  <h2 className="text-2xl font-bold mb-4">Add Note</h2>
+              <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50">
+                <div className="bg-gray-800 p-6 rounded-xl w-96 shadow-2xl border border-gray-700">
+                  <h2 className="text-2xl font-bold mb-4 text-gray-100">
+                    Add Note
+                  </h2>
                   <form onSubmit={handleSubmitAddNote}>
                     <div className="mb-4">
-                      <label className="block text-sm font-semibold mb-2">
+                      <label className="block text-sm font-semibold mb-2 text-gray-200">
                         Title
                       </label>
                       <input
                         type="text"
-                        className="w-full p-2 border border-gray-300 outline-none rounded focus:outline-none focus:border-none focus:ring-2 focus:ring-blue-300"
+                        className="w-full p-2 bg-gray-700 border border-gray-600 outline-none rounded focus:outline-none focus:border-none focus:ring-2 focus:ring-purple-500 text-white"
                         value={title}
                         placeholder="Enter note title"
                         onChange={(e) => setNoteTitle(e.target.value)}
@@ -174,11 +187,11 @@ function NoteUI() {
                       />
                     </div>
                     <div className="mb-4">
-                      <label className="block text-sm font-semibold mb-2">
+                      <label className="block text-sm font-semibold mb-2 text-gray-200">
                         Content
                       </label>
                       <textarea
-                        className="w-full h-[70px] p-2 border border-gray-300 outline-none rounded focus:outline-none focus:border-none focus:ring-2 focus:ring-blue-300"
+                        className="w-full h-[70px] p-2 bg-gray-700 border border-gray-600 outline-none rounded focus:outline-none focus:border-none focus:ring-2 focus:ring-purple-500 text-white"
                         rows="4"
                         value={content}
                         placeholder="Enter note content"
@@ -187,40 +200,40 @@ function NoteUI() {
                       ></textarea>
                     </div>
                     <div className="mb-4">
-                      <label className="block text-sm font-semibold mb-2">
+                      <label className="block text-sm font-semibold mb-2 text-gray-200">
                         Date
                       </label>
                       <input
                         type="date"
-                        className="w-full p-2 border border-gray-300 outline-none rounded focus:outline-none focus:border-none focus:ring-2 focus:ring-blue-300"
+                        className="w-full p-2 bg-gray-700 border border-gray-600 outline-none rounded focus:outline-none focus:border-none focus:ring-2 focus:ring-purple-500 text-white"
                         value={date}
                         onChange={(e) => setNoteDate(e.target.value)}
                       />
                     </div>
                     <div className="mb-4">
-                      <label className="block text-sm font-semibold mb-2">
+                      <label className="block text-sm font-semibold mb-2 text-gray-200">
                         Time Start
                       </label>
                       <input
                         type="time"
-                        className="w-full p-2 border border-gray-300 outline-none rounded focus:outline-none focus:border-none focus:ring-2 focus:ring-blue-300"
+                        className="w-full p-2 bg-gray-700 border border-gray-600 outline-none rounded focus:outline-none focus:border-none focus:ring-2 focus:ring-purple-500 text-white"
                         value={time_start}
                         onChange={(e) => setNoteTimeStart(e.target.value)}
                       />
                     </div>
                     <div className="mb-4">
-                      <label className="block text-sm font-semibold mb-2">
+                      <label className="block text-sm font-semibold mb-2 text-gray-200">
                         Time End
                       </label>
                       <input
                         type="time"
-                        className="w-full p-2 border border-gray-300 outline-none rounded focus:outline-none focus:border-none focus:ring-2 focus:ring-blue-300"
+                        className="w-full p-2 bg-gray-700 border border-gray-600 outline-none rounded focus:outline-none focus:border-none focus:ring-2 focus:ring-purple-500 text-white"
                         value={time_end}
                         onChange={(e) => setNoteTimeEnd(e.target.value)}
                       />
                     </div>
                     <div className="mb-4">
-                      <label className="block text-sm font-semibold mb-2">
+                      <label className="block text-sm font-semibold mb-2 text-gray-200">
                         Importance
                       </label>
                       <div className="flex space-x-4 justify-between">
@@ -232,8 +245,9 @@ function NoteUI() {
                             value="Low"
                             onChange={(e) => setTag(e.target.value)}
                             checked={tag === "Low"}
+                            className="text-purple-600 focus:ring-purple-500 bg-gray-700 border-gray-600"
                           />
-                          <label htmlFor="low" className="ml-2">
+                          <label htmlFor="low" className="ml-2 text-gray-200">
                             Low
                           </label>
                         </div>
@@ -245,8 +259,12 @@ function NoteUI() {
                             value="Medium"
                             onChange={(e) => setTag(e.target.value)}
                             checked={tag === "Medium"}
+                            className="text-purple-600 focus:ring-purple-500 bg-gray-700 border-gray-600"
                           />
-                          <label htmlFor="medium" className="ml-2">
+                          <label
+                            htmlFor="medium"
+                            className="ml-2 text-gray-200"
+                          >
                             Medium
                           </label>
                         </div>
@@ -258,8 +276,9 @@ function NoteUI() {
                             value="High"
                             onChange={(e) => setTag(e.target.value)}
                             checked={tag === "High"}
+                            className="text-purple-600 focus:ring-purple-500 bg-gray-700 border-gray-600"
                           />
-                          <label htmlFor="high" className="ml-2">
+                          <label htmlFor="high" className="ml-2 text-gray-200">
                             High
                           </label>
                         </div>
@@ -268,14 +287,14 @@ function NoteUI() {
                     <div className="flex justify-between space-x-5 mt-5">
                       <button
                         type="button"
-                        className="bg-[#DE3163] text-white font-semibold px-4 w-[120px] py-2 rounded-lg cursor-pointer hover:bg-[#E50046]"
+                        className="bg-gray-600 hover:bg-gray-700 text-white font-semibold px-4 w-[120px] py-2 rounded-lg cursor-pointer transition-colors duration-200"
                         onClick={closeModal}
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="bg-[#2DAA9E] text-white font-semibold w-[120px] px-4 py-2 rounded-lg cursor-pointer hover:bg-[#3D8D7A]"
+                        className="bg-purple-700 hover:bg-purple-800 text-white font-semibold w-[120px] px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200"
                       >
                         Save Note
                       </button>
@@ -285,30 +304,17 @@ function NoteUI() {
               </div>
             )}
 
-            <div className="flex">
-              <div className="w-1/4 h-[300px] flex flex-col space-y-4">
-                <div className=" bg-white/20 border-white/20 backdrop-blur-lg p-4 w-full rounded-xl shadow-2xl">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="w-full md:w-1/4 flex flex-col space-y-4">
+                <div className="bg-gray-800/80 border border-gray-700 backdrop-blur-lg p-4 w-full rounded-xl shadow-2xl">
                   <div className="flex justify-between items-center mb-2">
                     <button
                       onClick={() => changeMonth(-1)}
-                      className="px-2 py-1 rounded cursor-pointer"
+                      className="p-1 rounded-full hover:bg-gray-700 cursor-pointer transition-colors duration-200"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                      >
-                        <g fill="none" fill-rule="evenodd">
-                          <path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" />
-                          <path
-                            fill="currentColor"
-                            d="M7.94 13.06a1.5 1.5 0 0 1 0-2.12l5.656-5.658a1.5 1.5 0 1 1 2.121 2.122L11.122 12l4.596 4.596a1.5 1.5 0 1 1-2.12 2.122l-5.66-5.658Z"
-                          />
-                        </g>
-                      </svg>
+                      <ChevronLeft className="w-5 h-5 text-gray-300" />
                     </button>
-                    <h2 className="font-semibold">
+                    <h2 className="font-semibold text-gray-200">
                       {selectedDate.toLocaleString("default", {
                         month: "long",
                       })}{" "}
@@ -316,22 +322,9 @@ function NoteUI() {
                     </h2>
                     <button
                       onClick={() => changeMonth(1)}
-                      className="px-2 py-1 rounded cursor-pointer"
+                      className="p-1 rounded-full hover:bg-gray-700 cursor-pointer transition-colors duration-200"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                      >
-                        <g fill="none" fill-rule="evenodd">
-                          <path d="M24 0v24H0V0zM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.019-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" />
-                          <path
-                            fill="currentColor"
-                            d="M16.06 10.94a1.5 1.5 0 0 1 0 2.12l-5.656 5.658a1.5 1.5 0 1 1-2.121-2.122L12.879 12L8.283 7.404a1.5 1.5 0 0 1 2.12-2.122l5.658 5.657Z"
-                          />
-                        </g>
-                      </svg>
+                      <ChevronRight className="w-5 h-5 text-gray-300" />
                     </button>
                   </div>
                   <div className="grid grid-cols-7 gap-2">
@@ -348,30 +341,30 @@ function NoteUI() {
                         key={day}
                         className={`p-2 text-center rounded ${
                           day + 1 === selectedDate.getDate()
-                            ? "bg-blue-500 text-white"
-                            : "bg-transparent"
-                        }`}
+                            ? "bg-purple-700 text-white"
+                            : "hover:bg-gray-700 text-gray-300"
+                        } cursor-pointer transition-colors duration-200`}
                       >
                         {day + 1}
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="bg-white/20 border-white/20 backdrop-blur-lg p-4 w-full rounded-xl shadow-2xl">
-                  <h1 className="font-bold text-lg text-white">
+                <div className="bg-gray-800/80 border border-gray-700 backdrop-blur-lg p-4 w-full rounded-xl shadow-2xl">
+                  <h1 className="font-bold text-lg text-gray-100">
                     Tasks Due Today
                   </h1>
                   <div className="flex items-center space-x-2 mt-4">
-                    <div className="w-[2px] h-[20px] bg-red-500"></div>
-                    <h1 className="text-sm text-white">
+                    <div className="w-[2px] h-[20px] bg-purple-500"></div>
+                    <h1 className="text-sm text-gray-300">
                       Meeting with Alpha Team
                     </h1>
                   </div>
                 </div>
               </div>
 
-              <div className="w-3/4 bg-white/20 border-white/20 backdrop-blur-lg ml-4 p-4 rounded-xl shadow-2xl">
-                <div className="grid grid-cols-7 gap-1 mt-4">
+              <div className="w-full md:w-3/4 bg-gray-800/80 border border-gray-700 backdrop-blur-lg p-4 rounded-xl shadow-2xl">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2 mt-4">
                   {[
                     ...Array(
                       new Date(
@@ -399,29 +392,31 @@ function NoteUI() {
                     return (
                       <div
                         key={day}
-                        className="p-2 bg-transparent h-[100px] border border-gray-300 rounded shadow-xl flex flex-col"
+                        className="p-2 bg-gray-700/50 h-[100px] border border-gray-600 rounded shadow-xl flex flex-col"
                       >
+                        <div className="text-xs text-gray-400 mb-1">
+                          {day + 1}
+                        </div>
                         <div
                           className="flex-1 overflow-y-auto space-y-1 pr-1
-            [&::-webkit-scrollbar-thumb]:bg-[#80CBC4]
-            [&::-webkit-scrollbar-thumb]:rounded-full
-            [&::-webkit-scrollbar]:w-[5px]
-            dark:[&::-webkit-scrollbar-track]:bg-neutral-700
-            dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500"
+                          [&::-webkit-scrollbar-thumb]:bg-gray-600
+                          [&::-webkit-scrollbar-thumb]:rounded-full
+                          [&::-webkit-scrollbar]:w-[5px]
+                          [&::-webkit-scrollbar-track]:bg-gray-800"
                         >
                           {dayNotes.map((note, idx) => (
                             <div
                               key={idx}
                               onClick={() => setSelectedNote(note)}
                               className={`cursor-pointer text-white px-2 py-1 rounded text-xs max-w-full whitespace-nowrap overflow-hidden text-ellipsis
-                  ${
-                    note.tag === "Low"
-                      ? "bg-green-500"
-                      : note.tag === "Medium"
-                      ? "bg-amber-500"
-                      : "bg-red-500"
-                  }
-                `}
+                              ${
+                                note.tag === "Low"
+                                  ? "bg-emerald-600 hover:bg-emerald-700"
+                                  : note.tag === "Medium"
+                                  ? "bg-amber-600 hover:bg-amber-700"
+                                  : "bg-rose-600 hover:bg-rose-700"
+                              } transition-colors duration-200
+                            `}
                             >
                               <div>{note.title}</div>
                               <div>
@@ -439,55 +434,85 @@ function NoteUI() {
                 {/* Modal xem chi tiết */}
                 {selectedNote &&
                   (isEditing ? (
-                    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-                      <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl">
-                        <h2 className="text-lg font-semibold mb-3">
-                          ✏️ Chỉnh sửa ghi chú
-                        </h2>
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex justify-center items-center z-50">
+                      <div className="bg-gray-800 w-full max-w-md p-7 rounded-2xl shadow-2xl border border-gray-700/50 animate-fadeIn">
+                        <div className="flex items-center gap-3 mb-5 border-b border-gray-700/50 pb-4">
+                          <div className="bg-purple-600/20 p-2 rounded-lg">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5 text-purple-400"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </div>
+                          <h2 className="text-xl font-semibold text-gray-100">
+                            Chỉnh sửa ghi chú
+                          </h2>
+                        </div>
 
-                        <input
-                          type="text"
-                          className="w-full border p-2 rounded mt-2"
-                          value={editNote.title}
-                          onChange={(e) =>
-                            setEditNote({ ...editNote, title: e.target.value })
-                          }
-                          placeholder="Tiêu đề ghi chú"
-                        />
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1.5 ml-1">
+                              Tiêu đề
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                className="w-full bg-gray-700/50 border border-gray-600/50 p-3 pl-4 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-transparent transition-all duration-200"
+                                value={editNote.title}
+                                onChange={(e) =>
+                                  setEditNote({
+                                    ...editNote,
+                                    title: e.target.value,
+                                  })
+                                }
+                                placeholder="Nhập tiêu đề ghi chú"
+                              />
+                            </div>
+                          </div>
 
-                        <textarea
-                          className="w-full border p-2 rounded mt-2"
-                          value={editNote.content}
-                          onChange={(e) =>
-                            setEditNote({
-                              ...editNote,
-                              content: e.target.value,
-                            })
-                          }
-                          placeholder="Nội dung chi tiết"
-                        ></textarea>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-1.5 ml-1">
+                              Nội dung
+                            </label>
+                            <div className="relative">
+                              <textarea
+                                className="w-full bg-gray-700/50 border border-gray-600/50 p-3 pl-4 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/70 focus:border-transparent transition-all duration-200 min-h-[120px] resize-none"
+                                value={editNote.content}
+                                onChange={(e) =>
+                                  setEditNote({
+                                    ...editNote,
+                                    content: e.target.value,
+                                  })
+                                }
+                                placeholder="Nhập nội dung chi tiết"
+                              ></textarea>
+                            </div>
+                          </div>
+                        </div>
 
-                        <div className="flex justify-end gap-2 mt-4">
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-700/50">
                           <button
-                            className="bg-green-500 flex justify-center items-center gap-2 hover:bg-green-600 text-white px-4 py-2 rounded"
-                            onClick={() => {
-                              const updatedNotes = noteData.map((note) =>
-                                note.id === editNote.id ? editNote : note
-                              );
-                              setNoteData(updatedNotes);
-                              setIsEditing(false);
-                              setSelectedNote(editNote);
-                            }}
-                          >
-                            <Save className="w-4 h-4 text-white" />
-                            <span className="text-sm font-medium">Lưu</span>
-                          </button>
-                          <button
-                            className="bg-gray-400 flex gap-2 justify-center items-center hover:bg-gray-500 text-white px-4 py-2 rounded"
+                            className="bg-gray-700 hover:bg-gray-600 flex gap-2 justify-center items-center text-gray-200 px-4 py-2.5 rounded-lg transition-colors duration-200 font-medium"
                             onClick={() => setIsEditing(false)}
                           >
-                            <X className="w-4 h-4 text-white" />
-                            <span className="text-sm font-medium">Exit</span>
+                            <X className="w-4 h-4" />
+                            <span>Hủy</span>
+                          </button>
+                          <button
+                            className="bg-gradient-to-r from-purple-700 to-purple-600 hover:from-purple-600 hover:to-purple-500 flex justify-center items-center gap-2 text-white px-5 py-2.5 rounded-lg transition-all duration-200 shadow-lg shadow-purple-900/20 font-medium"
+                            onClick={() => handleUpdateNote(editNote.id)}
+                          >
+                            <Save className="w-4 h-4" />
+                            <span>Lưu thay đổi</span>
                           </button>
                         </div>
                       </div>
@@ -497,7 +522,7 @@ function NoteUI() {
                       note={selectedNote}
                       onClose={() => setSelectedNote(null)}
                       onEdit={handleEdit}
-                      // onDelete={handleDelete}
+                      onDelete={handleDeleteNote}
                     />
                   ))}
               </div>
