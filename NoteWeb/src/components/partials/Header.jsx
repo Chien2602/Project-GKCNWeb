@@ -39,13 +39,13 @@ function Header({ username }) {
 
     // Validate passwords
     if (newPassword !== confirmPassword) {
-      setError("Mật khẩu mới không khớp")
+      setError("New password does not match")
       setIsLoading(false)
       return
     }
 
     if (newPassword.length < 8) {
-      setError("Mật khẩu mới phải có ít nhất 8 ký tự")
+      setError("The new password must be at least 8 characters long")
       setIsLoading(false)
       return
     }
@@ -57,7 +57,7 @@ function Header({ username }) {
         new_password: newPassword,
       })
 
-      setSuccess("Đổi mật khẩu thành công!")
+      setSuccess("Password changed successfully!")
       setCurrentPassword("")
       setNewPassword("")
       setConfirmPassword("")
@@ -67,8 +67,8 @@ function Header({ username }) {
         closePasswordModal()
       }, 2000)
     } catch (err) {
-      console.error("Lỗi khi đổi mật khẩu:", err)
-      setError(err.response?.data?.detail || "Mật khẩu hiện tại không đúng hoặc có lỗi xảy ra")
+      console.error("Error changing password:", err)
+      setError(err.response?.data?.detail || "The current password is incorrect or an error occurred")
     } finally {
       setIsLoading(false)
     }
