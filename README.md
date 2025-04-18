@@ -34,7 +34,7 @@ Kích hoạt môi trường ảo:
 myenv\Scripts\activate
 ```
 ## 3. Cài đặt các gói cần thiết
-Từ thư mục notesAPI, mở terminal và chạy câu lệnh sau để cài đặt các thư viện cần thiết:
+Từ thư mục NoteAPI, mở terminal và chạy câu lệnh sau để cài đặt các thư viện cần thiết:
 ```bash
 pip install -r requirements.txt
 ```
