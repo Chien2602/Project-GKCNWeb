@@ -1,7 +1,6 @@
 import React from "react";
 import { CheckCircle } from "lucide-react";
-import { motion } from "framer-motion"; // Thư viện tạo animation
-
+import { motion } from "framer-motion";
 const SuccessModal = ({ message, onClose }) => {
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 backdrop-blur-sm">
