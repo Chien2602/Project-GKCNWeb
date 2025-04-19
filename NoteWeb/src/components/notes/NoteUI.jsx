@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import HeaderWithTheme from "../partials/Header";
-import Calendar from "../Calendar";
-import NoteGrid from "../notes/NoteGrid";
+import Calendar from "../Calendar/Calendar";
+import NoteGrid from "./NoteGrid";
 import ModalAddNote from "../common/ModalAddNote";
 import ModalViewNote from "../common/ModalViewNote";
 import ModalEditNote from "../common/ModalEditNote";
 import NotificationAlert from "../common/NotificationAlert";
-import TodayTasks from "../notes/TodayTasks";
+import TodayTasks from "./TodayTasks";
 import api from "../../api/AxiosInstance";
 import { Plus } from "lucide-react";
 

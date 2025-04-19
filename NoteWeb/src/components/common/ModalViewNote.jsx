@@ -109,23 +109,30 @@ function ModalViewNote({ note, onClose, onEdit, onDelete }) {
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogOverlay className="fixed inset-0 bg-black/50" />{" "}
-        <DialogContent className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-          <DialogTitle className="text-gray-900 dark:text-white">
+        <DialogOverlay className="fixed inset-0 bg-black/40 dark:bg-black/70 backdrop-blur-sm" />
+
+        <DialogContent
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
+    bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 
+    p-6 rounded-xl shadow-xl w-full max-w-md border border-gray-200 dark:border-gray-700 transition-colors duration-300"
+        >
+          <DialogTitle className="text-xl font-semibold">
             Confirm Deletion
-          </DialogTitle>{" "}
-          <DialogDescription className="text-gray-700 dark:text-gray-300">
+          </DialogTitle>
+
+          <DialogDescription className="mt-2 text-gray-600 dark:text-gray-300">
             Are you sure you want to delete this note? This action cannot be
             undone.
           </DialogDescription>
-          <DialogFooter>
+
+          <DialogFooter className="mt-6 flex justify-end gap-2">
             <DialogClose asChild>
-              <button className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
+              <button className="bg-gray-500 dark:bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors">
                 Cancel
               </button>
             </DialogClose>
             <button
-              className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+              className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors"
               onClick={handleDelete}
             >
               Confirm

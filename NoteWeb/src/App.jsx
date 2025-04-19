@@ -1,9 +1,9 @@
 import React from "react";
 import { Routes, Route } from "react-router";
-import NoteUI from "./components/pages/NoteUI";
-import Login from "./components/pages/Login";
-import Register from "./components/pages/Register";
-import ProtectedRoute from "./middleware/ProtectedRoute";
+import NoteUI from "./components/notes/NoteUI";
+import Login from "./components/auth/Login";
+import Register from "./components/auth/Register";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function App() {
   return (

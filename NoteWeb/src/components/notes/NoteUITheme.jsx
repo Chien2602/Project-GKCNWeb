@@ -1,7 +1,7 @@
 "use client"
 
-import ThemeProvider from "../theme-provider"
-import NoteUI from "./note-ui"
+import ThemeProvider from "../ThemeProvider"
+import NoteUI from "./NoteUI"
 
 function NoteUITheme() {
   return (
